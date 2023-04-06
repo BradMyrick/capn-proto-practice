@@ -1,30 +1,56 @@
 package main
 
 import (
+	"bufio"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
-	"io/ioutil"
+	"math/big"
 	"os"
 
-	receipt "capn-proto-practice/receipt/receipt"
+	receipt "capn-proto-practice/receipt"
 
 	capnp "zombiezen.com/go/capnproto2"
 )
 
-func main() {
+func RunAndVerify(data string) {
+	// Receive sample data from args
+	sampleData := data
+
+	// Generate a key pair
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		panic(err)
+	}
+	publicKey := &privateKey.PublicKey
+
+	// Hash the data
+	hash := sha256.Sum256([]byte(sampleData))
+
+	// Sign the hashed data
+	r, s, err := ecdsa.Sign(rand.Reader, privateKey, hash[:])
+	if err != nil {
+		panic(err)
+	}
+	signature := append(r.Bytes(), s.Bytes()...)
+
 	// Create a new Receipt message
 	msg, seg, err := capnp.NewMessage(capnp.SingleSegment(nil))
 	if err != nil {
 		panic(err)
 	}
 
-	r, err := receipt.NewRootReceipt(seg)
+	rcpt, err := receipt.NewRootReceipt(seg)
 	if err != nil {
 		panic(err)
 	}
 
-	r.SetId(1)
-	r.SetData([]byte("example data"))
-	r.SetSignature([]byte("example signature"))
+	rcpt.SetId(1)
+	rcpt.SetData([]byte(sampleData))
+	rcpt.SetSignature(signature)
 
 	// Serialize the Receipt message
 	err = capnp.NewEncoder(os.Stdout).Encode(msg)
@@ -33,18 +59,17 @@ func main() {
 	}
 
 	// Save the serialized message to a file
-	data, err := ioutil.ReadAll(os.Stdin)
+	msgBytes, err := msg.Marshal()
 	if err != nil {
 		panic(err)
 	}
-
-	err = ioutil.WriteFile("serialized_receipt.bin", data, 0644)
+	err = os.WriteFile("serialized_receipt.bin", msgBytes, 0644)
 	if err != nil {
 		panic(err)
 	}
 
 	// Deserialize the Receipt message
-	fileData, err := ioutil.ReadFile("serialized_receipt.bin")
+	fileData, err := os.ReadFile("serialized_receipt.bin")
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +84,36 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("ID: %d\n", deserializedReceipt.Id())
-	fmt.Printf("Data: %s\n", string(deserializedReceipt.Data()))
-	fmt.Printf("Signature: %s\n", string(deserializedReceipt.Signature()))
+	id := deserializedReceipt.Id()
+
+	dataBytes, err := deserializedReceipt.Data()
+	if err != nil {
+		panic(err)
+	}
+	signatureBytes, err := deserializedReceipt.Signature()
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("\nID: %d\n", id)
+	fmt.Printf("Data: %s\n", string(dataBytes))
+	fmt.Printf("Signature: %s\n", hex.EncodeToString(signatureBytes))
+
+	// Verify the signature
+	rBytes, sBytes := signatureBytes[:len(signatureBytes)/2], signatureBytes[len(signatureBytes)/2:]
+	r = new(big.Int).SetBytes(rBytes)
+	s = new(big.Int).SetBytes(sBytes)
+	isValid := ecdsa.Verify(publicKey, hash[:], r, s)
+	fmt.Printf("Signature valid: %v\n", isValid)
+}
+
+func main() {
+	// get message from user input
+	var message string
+	fmt.Print("Enter message: ")
+	scanner := bufio.NewScanner(os.Stdin)
+	if scanner.Scan() {
+		message = scanner.Text()
+	}
+	RunAndVerify(message)
 }
