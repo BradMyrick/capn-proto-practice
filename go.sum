@@ -1,0 +1,14 @@
+capnproto.org/go/capnp/v3 v3.0.0-alpha.26 h1:6rjhobokfu924BvkL3QpnTurWnvZQVBtWUyFVD9Dvng=
+capnproto.org/go/capnp/v3 v3.0.0-alpha.26/go.mod h1:wvLs5WEA1WVb/uQyL/HNXUp81kBPjjKbx68N7TtkorQ=
+golang.org/x/net v0.8.0 h1:Zrh2ngAOFYneWTAIAPethzeaQLuHwhuBkuV6ZiRnUaQ=
+golang.org/x/net v0.8.0/go.mod h1:QVkue5JL9kW//ek3r6jTKnTFis1tRmNAW2P1shuFdJc=
+golang.org/x/net v0.9.0 h1:aWJ/m6xSmxWBx+V0XRHTlrYrPG56jKsLdTFmsSsCzOM=
+golang.org/x/net v0.9.0/go.mod h1:d48xBJpPfHeWQsugry2m+kC02ZBRGRgulfHnEXEuWns=
+golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9 h1:SQFwaSi55rU7vdNs9Yr0Z324VNlrF+0wMqRXT4St8ck=
+golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
+zenhack.net/go/util v0.0.0-20230327231740-da8cb323921c h1:L+T38E+u91e956ykUrYKHZaZef9hKMJsnGmTbMVb2cE=
+zenhack.net/go/util v0.0.0-20230327231740-da8cb323921c/go.mod h1:0lafdGg7tDb7RcXASgmJmRbLFLkAxu328+KGIs7icDE=
+zombiezen.com/go/capnproto2 v2.18.0+incompatible h1:mwfXZniffG5mXokQGHUJWGnqIBggoPfT/CEwon9Yess=
+zombiezen.com/go/capnproto2 v2.18.0+incompatible/go.mod h1:XO5Pr2SbXgqZwn0m0Ru54QBqpOf4K5AYBO+8LAOBQEQ=
+zombiezen.com/go/capnproto2 v2.18.2+incompatible h1:v3BD1zbruvffn7zjJUU5Pn8nZAB11bhZSQC4W+YnnKo=
+zombiezen.com/go/capnproto2 v2.18.2+incompatible/go.mod h1:XO5Pr2SbXgqZwn0m0Ru54QBqpOf4K5AYBO+8LAOBQEQ=
