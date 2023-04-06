@@ -10,14 +10,39 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"strconv"
+	"strings"
 
 	receipt "capn-proto-practice/receipt"
 
 	capnp "zombiezen.com/go/capnproto2"
 )
 
-func RunAndVerify(data string) {
-	// Receive sample data from args
+const stateFile = "chain_state.txt"
+
+// Save state to file
+func saveState(id int) {
+	err := os.WriteFile(stateFile, []byte(strconv.Itoa(id)), 0644)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Read state from file
+func readState() int {
+	data, err := os.ReadFile(stateFile)
+	if err != nil {
+		// If file does not exist, set initial state to 0
+		return 0
+	}
+	id, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil {
+		panic(err)
+	}
+	return id
+}
+
+func RunAndVerify(data string, id int) {
 	sampleData := data
 
 	// Generate a key pair
@@ -48,15 +73,9 @@ func RunAndVerify(data string) {
 		panic(err)
 	}
 
-	rcpt.SetId(1)
+	rcpt.SetId(uint64(id))
 	rcpt.SetData([]byte(sampleData))
 	rcpt.SetSignature(signature)
-
-	// Serialize the Receipt message
-	err = capnp.NewEncoder(os.Stdout).Encode(msg)
-	if err != nil {
-		panic(err)
-	}
 
 	// Save the serialized message to a file
 	msgBytes, err := msg.Marshal()
@@ -84,7 +103,7 @@ func RunAndVerify(data string) {
 		panic(err)
 	}
 
-	id := deserializedReceipt.Id()
+	deserializedID := deserializedReceipt.Id()
 
 	dataBytes, err := deserializedReceipt.Data()
 	if err != nil {
@@ -95,7 +114,7 @@ func RunAndVerify(data string) {
 		panic(err)
 	}
 
-	fmt.Printf("\nID: %d\n", id)
+	fmt.Printf("\nID: %d\n", deserializedID)
 	fmt.Printf("Data: %s\n", string(dataBytes))
 	fmt.Printf("Signature: %s\n", hex.EncodeToString(signatureBytes))
 
@@ -108,12 +127,20 @@ func RunAndVerify(data string) {
 }
 
 func main() {
-	// get message from user input
-	var message string
+	// Get message from user input
+	reader := bufio.NewReader(os.Stdin)
 	fmt.Print("Enter message: ")
-	scanner := bufio.NewScanner(os.Stdin)
-	if scanner.Scan() {
-		message = scanner.Text()
-	}
-	RunAndVerify(message)
+	message, _ := reader.ReadString('\n')
+
+	// Get the current ID from the chain state
+	currentID := readState()
+
+	// Increment the ID
+	newID := currentID + 1
+
+	// Save the new ID to the chain state
+	saveState(newID)
+
+	// Run verification with the updated ID
+	RunAndVerify(message, newID)
 }
