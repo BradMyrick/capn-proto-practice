@@ -1,4 +1,4 @@
-using Go = import "./std/go.capnp";
+using Go = import "../std/go.capnp";
 @0x961334376ded49ac;
 $Go.package("main");
 $Go.import("person");

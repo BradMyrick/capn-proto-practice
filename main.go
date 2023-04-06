@@ -2,84 +2,64 @@ package main
 
 import (
 	"fmt"
-	"log"
+	"io/ioutil"
 	"os"
 
-	person "capn-proto-practice/person"
+	receipt "capn-proto-practice/receipt/receipt"
 
 	capnp "zombiezen.com/go/capnproto2"
 )
 
 func main() {
-	// Create a new AddressBook message
+	// Create a new Receipt message
 	msg, seg, err := capnp.NewMessage(capnp.SingleSegment(nil))
 	if err != nil {
-		log.Fatal(err)
-	}
-	addressBook, err := person.NewRootAddressBook(seg)
-	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	// Create and add a new Person
-	newPerson, err := person.NewPerson(seg)
+	r, err := receipt.NewRootReceipt(seg)
 	if err != nil {
-		log.Fatal(err)
-	}
-	newPerson.SetId(1)
-	newPerson.SetName("Brad")
-	newPerson.SetAge(36)
-	newPerson.SetEmail("kodr@codemucho.com")
-
-	// Create a new list of Person structs and set the first one
-	people, err := addressBook.NewPeople(1)
-	if err != nil {
-		log.Fatal(err)
-	}
-	people.Set(0, newPerson)
-	addressBook.SetPeople(people)
-
-	// Serialize the message to a file
-	f, err := os.Create("addressbook.bin")
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer f.Close()
-	err = capnp.NewEncoder(f).Encode(msg)
-	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	// Read the message back from the file
-	f2, err := os.Open("addressbook.bin")
+	r.SetId(1)
+	r.SetData([]byte("example data"))
+	r.SetSignature([]byte("example signature"))
+
+	// Serialize the Receipt message
+	err = capnp.NewEncoder(os.Stdout).Encode(msg)
 	if err != nil {
-		log.Fatal(err)
-	}
-	defer f2.Close()
-	msg2, err := capnp.NewDecoder(f2).Decode()
-	if err != nil {
-		log.Fatal(err)
-	}
-	addressBook2, err := person.ReadRootAddressBook(msg2)
-	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
 
-	// Print the contents of the AddressBook
-	people2, err := addressBook2.People()
+	// Save the serialized message to a file
+	data, err := ioutil.ReadAll(os.Stdin)
 	if err != nil {
-		log.Fatal(err)
+		panic(err)
 	}
-	for i := 0; i < people2.Len(); i++ {
-		person2 := people2.At(i)
-		name, err := person2.Name()
-		if err != nil {
-			log.Fatal(err)
-		}
-		email, err := person2.Email()
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Person %d: %s (%d years old, email: %s)\n", person2.Id(), name, person2.Age(), email)
+
+	err = ioutil.WriteFile("serialized_receipt.bin", data, 0644)
+	if err != nil {
+		panic(err)
 	}
+
+	// Deserialize the Receipt message
+	fileData, err := ioutil.ReadFile("serialized_receipt.bin")
+	if err != nil {
+		panic(err)
+	}
+
+	deserializedMsg, err := capnp.Unmarshal(fileData)
+	if err != nil {
+		panic(err)
+	}
+
+	deserializedReceipt, err := receipt.ReadRootReceipt(deserializedMsg)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("ID: %d\n", deserializedReceipt.Id())
+	fmt.Printf("Data: %s\n", string(deserializedReceipt.Data()))
+	fmt.Printf("Signature: %s\n", string(deserializedReceipt.Signature()))
 }
